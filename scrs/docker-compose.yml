@@ -1,0 +1,64 @@
+version: '3'
+
+services:
+  mariadb:
+    container_name: mariadb_Mazen
+    build: 
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    #db_data is a volume craeted by docker directly
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - network
+    restart: always
+    env_file:
+      - .env
+
+  wordpress:
+    container_name: wordpress
+    #we will creat dependency between the two container (mariadb and wordpress)
+    depends_on:
+      - mariadb
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - network
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+      dockerfile: nginx.Dockerfile
+    restart: always
+    ports: 
+      - "443:443"
+    volumes: 
+      - wordpress_data:/var/www/html
+    networks:
+      - network
+
+
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/maabdela/data/mysql
+      o: bind
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/maabdela/data/wordpress
+      o: bind
+networks:
+  network:
+    driver: bridge
